@@ -1,3 +1,12 @@
-## Welcome to My Repo
+# Backbone Model Todo
 
-> I am your Readme.md file, you should probably update me.
+### Run
+
+```shell
+git git@github.com:class-ideas/backbone-model-todo.git
+cd backbone-model-todo
+npm install
+gulp start
+```
+
+Then visit localhost:8000
