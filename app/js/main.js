@@ -266,7 +266,7 @@
   };
 })(window.jQuery || window.Zepto || window.$);
 
-},{"jquery":7}],2:[function(require,module,exports){
+},{"jquery":10}],2:[function(require,module,exports){
 'use strict';
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
@@ -291,13 +291,9 @@ var _parse_auth = require('./parse_auth');
 
 var _parse_auth2 = _interopRequireDefault(_parse_auth);
 
-var _todo_model = require('./todo_model');
+var _resources = require('./resources');
 
-var _todo_model2 = _interopRequireDefault(_todo_model);
-
-var _todo_view = require('./todo_view');
-
-var _todo_view2 = _interopRequireDefault(_todo_view);
+var _views = require('./views');
 
 _jquery2['default'].ajaxSetup({
   headers: {
@@ -306,16 +302,16 @@ _jquery2['default'].ajaxSetup({
   }
 });
 
-var todos = new _todo_model2['default'].Collection();
+var todos = new _resources.TodoCollection();
 
 todos.fetch().then(function () {
 
-  (0, _jquery2['default'])('body').append(new _todo_view2['default'](todos).render().$el);
+  (0, _jquery2['default'])('body').append(new _views.TodoView(todos).render().$el);
 });
 
 console.log('Hello, World');
 
-},{"./parse_auth":3,"./todo_model":4,"./todo_view":5,"backbone":6,"jquery":7,"moment":8,"underscore":9}],3:[function(require,module,exports){
+},{"./parse_auth":3,"./resources":4,"./views":7,"backbone":9,"jquery":10,"moment":11,"underscore":12}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -339,28 +335,82 @@ Object.defineProperty(exports, '__esModule', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
+var _todo_model = require('./todo_model');
+
+var _todo_model2 = _interopRequireDefault(_todo_model);
+
+var _todo_collection = require('./todo_collection');
+
+var _todo_collection2 = _interopRequireDefault(_todo_collection);
+
+exports.TodoModel = _todo_model2['default'];
+exports.TodoCollection = _todo_collection2['default'];
+
+},{"./todo_collection":5,"./todo_model":6}],5:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
 var _backbone = require('backbone');
 
 var _backbone2 = _interopRequireDefault(_backbone);
 
-var Model = _backbone2['default'].Model.extend({
-  urlRoot: 'https://api.parse.com/1/classes/Todo',
-  idAttribute: 'objectId'
-});
+var _todo_model = require('./todo_model');
 
-var Collection = _backbone2['default'].Collection.extend({
+var _todo_model2 = _interopRequireDefault(_todo_model);
+
+var TodoCollection = _backbone2['default'].Collection.extend({
   url: 'https://api.parse.com/1/classes/Todo',
-  model: Model,
+  model: _todo_model2['default'],
   parse: function parse(data) {
     return data.results;
   }
 });
 
-exports.Model = Model;
-exports.Collection = Collection;
-exports['default'] = { Model: Model, Collection: Collection };
+exports['default'] = TodoCollection;
+module.exports = exports['default'];
 
-},{"backbone":6}],5:[function(require,module,exports){
+},{"./todo_model":6,"backbone":9}],6:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _backbone = require('backbone');
+
+var _backbone2 = _interopRequireDefault(_backbone);
+
+var TodoModel = _backbone2['default'].Model.extend({
+  urlRoot: 'https://api.parse.com/1/classes/Todo',
+  idAttribute: 'objectId'
+});
+
+exports['default'] = TodoModel;
+module.exports = exports['default'];
+
+},{"backbone":9}],7:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _todo = require('./todo');
+
+var _todo2 = _interopRequireDefault(_todo);
+
+exports.TodoView = _todo2['default'];
+
+},{"./todo":8}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -378,7 +428,7 @@ var _jquery2 = _interopRequireDefault(_jquery);
 // dependency on globals:
 // https://github.com/marioizquierdo/jquery.serializeJSON/pull/50
 
-require('../jquery-serializejson');
+require('../../jquery-serializejson');
 
 function template(model) {
   var complete = !!model.get('completeAt');
@@ -445,7 +495,7 @@ View.prototype = {
 exports['default'] = View;
 module.exports = exports['default'];
 
-},{"../jquery-serializejson":1,"jquery":7}],6:[function(require,module,exports){
+},{"../../jquery-serializejson":1,"jquery":10}],9:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.2.3
 
@@ -2344,7 +2394,7 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"jquery":7,"underscore":9}],7:[function(require,module,exports){
+},{"jquery":10,"underscore":12}],10:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -11556,7 +11606,7 @@ return jQuery;
 
 }));
 
-},{}],8:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 //! moment.js
 //! version : 2.10.6
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -14752,7 +14802,7 @@ return jQuery;
     return _moment;
 
 }));
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors

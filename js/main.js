@@ -3,8 +3,8 @@ import _ from 'underscore';
 import moment from 'moment';
 import Backbone from 'backbone';
 import parse from './parse_auth';
-import Todo from './todo_model';
-import TodoView from './todo_view';
+import {TodoCollection} from './resources';
+import {TodoView} from './views';
 
 $.ajaxSetup({
   headers: {
@@ -13,7 +13,7 @@ $.ajaxSetup({
   }
 });
 
-let todos = new Todo.Collection();
+let todos = new TodoCollection();
 
 todos.fetch().then(function() {
   
