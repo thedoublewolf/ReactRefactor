@@ -1,272 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/*!
-  SerializeJSON jQuery plugin.
-  https://github.com/marioizquierdo/jquery.serializeJSON
-  version 2.5.0 (Mar, 2015)
-
-  Copyright (c) 2012, 2015 Mario Izquierdo
-  Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
-  and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
-*/
-'use strict';
-
-(function ($) {
-  "use strict";
-
-  if (!$ && typeof exports !== 'undefined') {
-    $ = require('jquery');
-  }
-
-  // jQuery('form').serializeJSON()
-  $.fn.serializeJSON = function (options) {
-    var serializedObject, formAsArray, keys, type, value, _ref, f, opts;
-    f = $.serializeJSON;
-    opts = f.optsWithDefaults(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls}
-    f.validateOptions(opts);
-    formAsArray = this.serializeArray(); // array of objects {name, value}
-    f.readCheckboxUncheckedValues(formAsArray, this, opts); // add {name, value} of unchecked checkboxes if needed
-
-    serializedObject = {};
-    $.each(formAsArray, function (i, input) {
-      keys = f.splitInputNameIntoKeysArray(input.name);
-      type = keys.pop(); // the last element is always the type ("string" by default)
-      if (type !== 'skip') {
-        // easy way to skip a value
-        value = f.parseValue(input.value, type, opts); // string, number, boolean or null
-        if (opts.parseWithFunction && type === '_') value = opts.parseWithFunction(value, input.name); // allow for custom parsing
-        f.deepSet(serializedObject, keys, value, opts);
-      }
-    });
-    return serializedObject;
-  };
-
-  // Use $.serializeJSON as namespace for the auxiliar functions
-  // and to define defaults
-  $.serializeJSON = {
-
-    defaultOptions: {
-      parseNumbers: false, // convert values like "1", "-2.33" to 1, -2.33
-      parseBooleans: false, // convert "true", "false" to true, false
-      parseNulls: false, // convert "null" to null
-      parseAll: false, // all of the above
-      parseWithFunction: null, // to use custom parser, a function like: function(val){ return parsed_val; }
-      checkboxUncheckedValue: undefined, // to include that value for unchecked checkboxes (instead of ignoring them)
-      useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
-    },
-
-    // Merge options with defaults to get {parseNumbers, parseBoolens, parseNulls, useIntKeysAsArrayIndex}
-    optsWithDefaults: function optsWithDefaults(options) {
-      var f, parseAll;
-      if (options == null) options = {}; // arg default value = {}
-      f = $.serializeJSON;
-      parseAll = f.optWithDefaults('parseAll', options);
-      return {
-        parseNumbers: parseAll || f.optWithDefaults('parseNumbers', options),
-        parseBooleans: parseAll || f.optWithDefaults('parseBooleans', options),
-        parseNulls: parseAll || f.optWithDefaults('parseNulls', options),
-        parseWithFunction: f.optWithDefaults('parseWithFunction', options),
-        checkboxUncheckedValue: f.optWithDefaults('checkboxUncheckedValue', options),
-        useIntKeysAsArrayIndex: f.optWithDefaults('useIntKeysAsArrayIndex', options)
-      };
-    },
-
-    optWithDefaults: function optWithDefaults(key, options) {
-      return options[key] !== false && options[key] !== '' && (options[key] || $.serializeJSON.defaultOptions[key]);
-    },
-
-    validateOptions: function validateOptions(opts) {
-      var opt, validOpts;
-      validOpts = ['parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'checkboxUncheckedValue', 'useIntKeysAsArrayIndex'];
-      for (opt in opts) {
-        if (validOpts.indexOf(opt) === -1) {
-          throw new Error("serializeJSON ERROR: invalid option '" + opt + "'. Please use one of " + validOpts.join(','));
-        }
-      }
-    },
-
-    // Convert the string to a number, boolean or null, depending on the enable option and the string format.
-    parseValue: function parseValue(str, type, opts) {
-      var value, f;
-      f = $.serializeJSON;
-      if (type == 'string') return str; // force string
-      if (type == 'number' || opts.parseNumbers && f.isNumeric(str)) return Number(str); // number
-      if (type == 'boolean' || opts.parseBooleans && (str === "true" || str === "false")) return ["false", "null", "undefined", "", "0"].indexOf(str) === -1; // boolean
-      if (type == 'null' || opts.parseNulls && str == "null") return ["false", "null", "undefined", "", "0"].indexOf(str) !== -1 ? null : str; // null
-      if (type == 'array' || type == 'object') return JSON.parse(str); // array or objects require JSON
-      if (type == 'auto') return f.parseValue(str, null, { parseNumbers: true, parseBooleans: true, parseNulls: true }); // try again with something like "parseAll"
-      return str; // otherwise, keep same string
-    },
-
-    isObject: function isObject(obj) {
-      return obj === Object(obj);
-    }, // is this variable an object?
-    isUndefined: function isUndefined(obj) {
-      return obj === void 0;
-    }, // safe check for undefined values
-    isValidArrayIndex: function isValidArrayIndex(val) {
-      return (/^[0-9]+$/.test(String(val))
-      );
-    }, // 1,2,3,4 ... are valid array indexes
-    isNumeric: function isNumeric(obj) {
-      return obj - parseFloat(obj) >= 0;
-    }, // taken from jQuery.isNumeric implementation. Not using jQuery.isNumeric to support old jQuery and Zepto versions
-
-    // Split the input name in programatically readable keys.
-    // The last element is always the type (default "_").
-    // Examples:
-    // "foo"              => ['foo', '_']
-    // "foo:string"       => ['foo', 'string']
-    // "foo:boolean"      => ['foo', 'boolean']
-    // "[foo]"            => ['foo', '_']
-    // "foo[inn][bar]"    => ['foo', 'inn', 'bar', '_']
-    // "foo[inn[bar]]"    => ['foo', 'inn', 'bar', '_']
-    // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0', '_']
-    // "arr[][val]"       => ['arr', '', 'val', '_']
-    // "arr[][val]:null"  => ['arr', '', 'val', 'null']
-    splitInputNameIntoKeysArray: function splitInputNameIntoKeysArray(name) {
-      var keys, nameWithoutType, type, _ref, f;
-      f = $.serializeJSON;
-      _ref = f.extractTypeFromInputName(name), nameWithoutType = _ref[0], type = _ref[1];
-      keys = nameWithoutType.split('['); // split string into array
-      keys = $.map(keys, function (key) {
-        return key.replace(/]/g, '');
-      }); // remove closing brackets
-      if (keys[0] === '') {
-        keys.shift();
-      } // ensure no opening bracket ("[foo][inn]" should be same as "foo[inn]")
-      keys.push(type); // add type at the end
-      return keys;
-    },
-
-    // Returns [name-without-type, type] from name.
-    // "foo"              =>  ["foo", "_"]
-    // "foo:boolean"      =>  ["foo", "boolean"]
-    // "foo[bar]:null"    =>  ["foo[bar]", "null"]
-    extractTypeFromInputName: function extractTypeFromInputName(name) {
-      var match, f;
-      f = $.serializeJSON;
-      if (match = name.match(/(.*):([^:]+)$/)) {
-        var validTypes = ['string', 'number', 'boolean', 'null', 'array', 'object', 'skip', 'auto']; // validate type
-        if (validTypes.indexOf(match[2]) !== -1) {
-          return [match[1], match[2]];
-        } else {
-          throw new Error("serializeJSON ERROR: Invalid type " + match[2] + " found in input name '" + name + "', please use one of " + validTypes.join(', '));
-        }
-      } else {
-        return [name, '_']; // no defined type, then use parse options
-      }
-    },
-
-    // Set a value in an object or array, using multiple keys to set in a nested object or array:
-    //
-    // deepSet(obj, ['foo'], v)               // obj['foo'] = v
-    // deepSet(obj, ['foo', 'inn'], v)        // obj['foo']['inn'] = v // Create the inner obj['foo'] object, if needed
-    // deepSet(obj, ['foo', 'inn', '123'], v) // obj['foo']['arr']['123'] = v //
-    //
-    // deepSet(obj, ['0'], v)                                   // obj['0'] = v
-    // deepSet(arr, ['0'], v, {useIntKeysAsArrayIndex: true})   // arr[0] = v
-    // deepSet(arr, [''], v)                                    // arr.push(v)
-    // deepSet(obj, ['arr', ''], v)                             // obj['arr'].push(v)
-    //
-    // arr = [];
-    // deepSet(arr, ['', v]          // arr => [v]
-    // deepSet(arr, ['', 'foo'], v)  // arr => [v, {foo: v}]
-    // deepSet(arr, ['', 'bar'], v)  // arr => [v, {foo: v, bar: v}]
-    // deepSet(arr, ['', 'bar'], v)  // arr => [v, {foo: v, bar: v}, {bar: v}]
-    //
-    deepSet: function deepSet(o, keys, value, opts) {
-      var key, nextKey, tail, lastIdx, lastVal, f;
-      if (opts == null) opts = {};
-      f = $.serializeJSON;
-      if (f.isUndefined(o)) {
-        throw new Error("ArgumentError: param 'o' expected to be an object or array, found undefined");
-      }
-      if (!keys || keys.length === 0) {
-        throw new Error("ArgumentError: param 'keys' expected to be an array with least one element");
-      }
-
-      key = keys[0];
-
-      // Only one key, then it's not a deepSet, just assign the value.
-      if (keys.length === 1) {
-        if (key === '') {
-          o.push(value); // '' is used to push values into the array (assume o is an array)
-        } else {
-            o[key] = value; // other keys can be used as object keys or array indexes
-          }
-
-        // With more keys is a deepSet. Apply recursively.
-      } else {
-          nextKey = keys[1];
-
-          // '' is used to push values into the array,
-          // with nextKey, set the value into the same object, in object[nextKey].
-          // Covers the case of ['', 'foo'] and ['', 'var'] to push the object {foo, var}, and the case of nested arrays.
-          if (key === '') {
-            lastIdx = o.length - 1; // asume o is array
-            lastVal = o[lastIdx];
-            if (f.isObject(lastVal) && (f.isUndefined(lastVal[nextKey]) || keys.length > 2)) {
-              // if nextKey is not present in the last object element, or there are more keys to deep set
-              key = lastIdx; // then set the new value in the same object element
-            } else {
-                key = lastIdx + 1; // otherwise, point to set the next index in the array
-              }
-          }
-
-          // '' is used to push values into the array "array[]"
-          if (nextKey === '') {
-            if (f.isUndefined(o[key]) || !$.isArray(o[key])) {
-              o[key] = []; // define (or override) as array to push values
-            }
-          } else {
-              if (opts.useIntKeysAsArrayIndex && f.isValidArrayIndex(nextKey)) {
-                // if 1, 2, 3 ... then use an array, where nextKey is the index
-                if (f.isUndefined(o[key]) || !$.isArray(o[key])) {
-                  o[key] = []; // define (or override) as array, to insert values using int keys as array indexes
-                }
-              } else {
-                  // for anything else, use an object, where nextKey is going to be the attribute name
-                  if (f.isUndefined(o[key]) || !f.isObject(o[key])) {
-                    o[key] = {}; // define (or override) as object, to set nested properties
-                  }
-                }
-            }
-
-          // Recursively set the inner object
-          tail = keys.slice(1);
-          f.deepSet(o[key], tail, value, opts);
-        }
-    },
-
-    // Fill the formAsArray object with values for the unchecked checkbox inputs,
-    // using the same format as the jquery.serializeArray function.
-    // The value of the unchecked values is determined from the opts.checkboxUncheckedValue
-    // and/or the data-unchecked-value attribute of the inputs.
-    readCheckboxUncheckedValues: function readCheckboxUncheckedValues(formAsArray, $form, opts) {
-      var selector, $uncheckedCheckboxes, $el, dataUncheckedValue, f;
-      if (opts == null) opts = {};
-      f = $.serializeJSON;
-
-      selector = 'input[type=checkbox][name]:not(:checked):not([disabled])';
-      $uncheckedCheckboxes = $form.find(selector).add($form.filter(selector));
-      $uncheckedCheckboxes.each(function (i, el) {
-        $el = $(el);
-        dataUncheckedValue = $el.attr('data-unchecked-value');
-        if (dataUncheckedValue) {
-          // data-unchecked-value has precedence over option opts.checkboxUncheckedValue
-          formAsArray.push({ name: el.name, value: dataUncheckedValue });
-        } else {
-          if (!f.isUndefined(opts.checkboxUncheckedValue)) {
-            formAsArray.push({ name: el.name, value: opts.checkboxUncheckedValue });
-          }
-        }
-      });
-    }
-
-  };
-})(window.jQuery || window.Zepto || window.$);
-
-},{"jquery":10}],2:[function(require,module,exports){
 'use strict';
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
@@ -311,7 +43,7 @@ todos.fetch().then(function () {
 
 console.log('Hello, World');
 
-},{"./parse_auth":3,"./resources":4,"./views":7,"backbone":9,"jquery":10,"moment":11,"underscore":12}],3:[function(require,module,exports){
+},{"./parse_auth":2,"./resources":3,"./views":6,"backbone":8,"jquery":10,"moment":11,"underscore":12}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -326,7 +58,7 @@ exports['default'] = {
 };
 module.exports = exports['default'];
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -346,7 +78,7 @@ var _todo_collection2 = _interopRequireDefault(_todo_collection);
 exports.TodoModel = _todo_model2['default'];
 exports.TodoCollection = _todo_collection2['default'];
 
-},{"./todo_collection":5,"./todo_model":6}],5:[function(require,module,exports){
+},{"./todo_collection":4,"./todo_model":5}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -374,7 +106,7 @@ var TodoCollection = _backbone2['default'].Collection.extend({
 exports['default'] = TodoCollection;
 module.exports = exports['default'];
 
-},{"./todo_model":6,"backbone":9}],6:[function(require,module,exports){
+},{"./todo_model":5,"backbone":8}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -395,7 +127,7 @@ var TodoModel = _backbone2['default'].Model.extend({
 exports['default'] = TodoModel;
 module.exports = exports['default'];
 
-},{"backbone":9}],7:[function(require,module,exports){
+},{"backbone":8}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -410,7 +142,7 @@ var _todo2 = _interopRequireDefault(_todo);
 
 exports.TodoView = _todo2['default'];
 
-},{"./todo":8}],8:[function(require,module,exports){
+},{"./todo":7}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -423,12 +155,7 @@ var _jquery = require('jquery');
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
-// Using edited local copy until
-// they merge my PR that fixes their
-// dependency on globals:
-// https://github.com/marioizquierdo/jquery.serializeJSON/pull/50
-
-require('../../jquery-serializejson');
+require('jquery-serializejson');
 
 function template(model) {
   var complete = !!model.get('completeAt');
@@ -495,7 +222,7 @@ View.prototype = {
 exports['default'] = View;
 module.exports = exports['default'];
 
-},{"../../jquery-serializejson":1,"jquery":10}],9:[function(require,module,exports){
+},{"jquery":10,"jquery-serializejson":9}],8:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.2.3
 
@@ -2394,7 +2121,286 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"jquery":10,"underscore":12}],10:[function(require,module,exports){
+},{"jquery":10,"underscore":12}],9:[function(require,module,exports){
+/*!
+  SerializeJSON jQuery plugin.
+  https://github.com/marioizquierdo/jquery.serializeJSON
+  version 2.6.2 (May, 2015)
+
+  Copyright (c) 2012, 2015 Mario Izquierdo
+  Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
+  and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
+*/
+(function (factory) {
+  if (typeof define === 'function' && define.amd) { // AMD. Register as an anonymous module.
+    define(['jquery'], factory);
+  } else if (typeof exports === 'object') { // Node/CommonJS
+    var jQuery = require('jquery');
+    module.exports = factory(jQuery);
+  } else { // Browser globals (zepto supported)
+    factory(window.jQuery || window.Zepto || window.$); // Zepto supported on browsers as well
+  }
+
+}(function ($) {
+  "use strict";
+
+  // jQuery('form').serializeJSON()
+  $.fn.serializeJSON = function (options) {
+    var serializedObject, formAsArray, keys, type, value, _ref, f, opts;
+    f = $.serializeJSON;
+    opts = f.setupOpts(options); // calculate values for options {parseNumbers, parseBoolens, parseNulls}
+    formAsArray = this.serializeArray(); // array of objects {name, value}
+    f.readCheckboxUncheckedValues(formAsArray, this, opts); // add {name, value} of unchecked checkboxes if needed
+
+    serializedObject = {};
+    $.each(formAsArray, function (i, input) {
+      keys = f.splitInputNameIntoKeysArray(input.name, opts);
+      type = keys.pop(); // the last element is always the type ("string" by default)
+      if (type !== 'skip') { // easy way to skip a value
+        value = f.parseValue(input.value, type, opts); // string, number, boolean or null
+        if (opts.parseWithFunction && type === '_') { // allow for custom parsing
+          value = opts.parseWithFunction(value, input.name);
+        }
+        f.deepSet(serializedObject, keys, value, opts);
+      }
+    });
+    return serializedObject;
+  };
+
+  // Use $.serializeJSON as namespace for the auxiliar functions
+  // and to define defaults
+  $.serializeJSON = {
+
+    defaultOptions: {
+      checkboxUncheckedValue: undefined, // to include that value for unchecked checkboxes (instead of ignoring them)
+
+      parseNumbers: false, // convert values like "1", "-2.33" to 1, -2.33
+      parseBooleans: false, // convert "true", "false" to true, false
+      parseNulls: false, // convert "null" to null
+      parseAll: false, // all of the above
+      parseWithFunction: null, // to use custom parser, a function like: function(val){ return parsed_val; }
+
+      customTypes: {}, // override defaultTypes
+      defaultTypes: {
+        "string":  function(str) { return String(str); },
+        "number":  function(str) { return Number(str); },
+        "boolean": function(str) { var falses = ["false", "null", "undefined", "", "0"]; return falses.indexOf(str) === -1; },
+        "null":    function(str) { var falses = ["false", "null", "undefined", "", "0"]; return falses.indexOf(str) === -1 ? str : null; },
+        "array":   function(str) { return JSON.parse(str); },
+        "object":  function(str) { return JSON.parse(str); },
+        "auto":    function(str) { return $.serializeJSON.parseValue(str, null, {parseNumbers: true, parseBooleans: true, parseNulls: true}); } // try again with something like "parseAll"
+      },
+
+      useIntKeysAsArrayIndex: false // name="foo[2]" value="v" => {foo: [null, null, "v"]}, instead of {foo: ["2": "v"]}
+    },
+
+    // Merge option defaults into the options
+    setupOpts: function(options) {
+      var opt, validOpts, defaultOptions, optWithDefault, parseAll, f;
+      f = $.serializeJSON;
+
+      if (options == null) { options = {}; }   // options ||= {}
+      defaultOptions = f.defaultOptions || {}; // defaultOptions
+
+      // Make sure that the user didn't misspell an option
+      validOpts = ['checkboxUncheckedValue', 'parseNumbers', 'parseBooleans', 'parseNulls', 'parseAll', 'parseWithFunction', 'customTypes', 'defaultTypes', 'useIntKeysAsArrayIndex']; // re-define because the user may override the defaultOptions
+      for (opt in options) {
+        if (validOpts.indexOf(opt) === -1) {
+          throw new  Error("serializeJSON ERROR: invalid option '" + opt + "'. Please use one of " + validOpts.join(', '));
+        }
+      }
+
+      // Helper to get the default value for this option if none is specified by the user
+      optWithDefault = function(key) { return (options[key] !== false) && (options[key] !== '') && (options[key] || defaultOptions[key]); };
+
+      // Return computed options (opts to be used in the rest of the script)
+      parseAll = optWithDefault('parseAll');
+      return {
+        checkboxUncheckedValue:    optWithDefault('checkboxUncheckedValue'),
+
+        parseNumbers:  parseAll || optWithDefault('parseNumbers'),
+        parseBooleans: parseAll || optWithDefault('parseBooleans'),
+        parseNulls:    parseAll || optWithDefault('parseNulls'),
+        parseWithFunction:         optWithDefault('parseWithFunction'),
+
+        typeFunctions: $.extend({}, optWithDefault('defaultTypes'), optWithDefault('customTypes')),
+
+        useIntKeysAsArrayIndex: optWithDefault('useIntKeysAsArrayIndex')
+      };
+    },
+
+    // Given a string, apply the type or the relevant "parse" options, to return the parsed value
+    parseValue: function(str, type, opts) {
+      var typeFunction, f;
+      f = $.serializeJSON;
+
+      // Parse with a type if available
+      typeFunction = opts.typeFunctions && opts.typeFunctions[type];
+      if (typeFunction) { return typeFunction(str); } // use specific type
+
+      // Otherwise, check if there is any auto-parse option enabled and use it.
+      if (opts.parseNumbers  && f.isNumeric(str)) { return Number(str); } // auto: number
+      if (opts.parseBooleans && (str === "true" || str === "false")) { return str === "true"; } // auto: boolean
+      if (opts.parseNulls    && str == "null") { return null; } // auto: null
+
+      // If none applies, just return the str
+      return str;
+    },
+
+    isObject:          function(obj) { return obj === Object(obj); }, // is it an Object?
+    isUndefined:       function(obj) { return obj === void 0; }, // safe check for undefined values
+    isValidArrayIndex: function(val) { return /^[0-9]+$/.test(String(val)); }, // 1,2,3,4 ... are valid array indexes
+    isNumeric:         function(obj) { return obj - parseFloat(obj) >= 0; }, // taken from jQuery.isNumeric implementation. Not using jQuery.isNumeric to support old jQuery and Zepto versions
+
+    optionKeys: function(obj) { if (Object.keys) { return Object.keys(obj); } else { var key, keys = []; for(key in obj){ keys.push(key); } return keys;} }, // polyfill Object.keys to get option keys in IE<9
+
+    // Split the input name in programatically readable keys.
+    // The last element is always the type (default "_").
+    // Examples:
+    // "foo"              => ['foo', '_']
+    // "foo:string"       => ['foo', 'string']
+    // "foo:boolean"      => ['foo', 'boolean']
+    // "[foo]"            => ['foo', '_']
+    // "foo[inn][bar]"    => ['foo', 'inn', 'bar', '_']
+    // "foo[inn[bar]]"    => ['foo', 'inn', 'bar', '_']
+    // "foo[inn][arr][0]" => ['foo', 'inn', 'arr', '0', '_']
+    // "arr[][val]"       => ['arr', '', 'val', '_']
+    // "arr[][val]:null"  => ['arr', '', 'val', 'null']
+    splitInputNameIntoKeysArray: function(name, opts) {
+      var keys, nameWithoutType, type, _ref, f;
+      f = $.serializeJSON;
+      _ref = f.extractTypeFromInputName(name, opts); nameWithoutType = _ref[0]; type = _ref[1];
+      keys = nameWithoutType.split('['); // split string into array
+      keys = $.map(keys, function (key) { return key.replace(/\]/g, ''); }); // remove closing brackets
+      if (keys[0] === '') { keys.shift(); } // ensure no opening bracket ("[foo][inn]" should be same as "foo[inn]")
+      keys.push(type); // add type at the end
+      return keys;
+    },
+
+    // Returns [name-without-type, type] from name.
+    // "foo"              =>  ["foo",      '_']
+    // "foo:boolean"      =>  ["foo",      'boolean']
+    // "foo[bar]:null"    =>  ["foo[bar]", 'null']
+    extractTypeFromInputName: function(name, opts) {
+      var match, validTypes, f;
+      if (match = name.match(/(.*):([^:]+)$/)){
+        f = $.serializeJSON;
+
+        validTypes = f.optionKeys(opts ? opts.typeFunctions : f.defaultOptions.defaultTypes);
+        validTypes.push('skip'); // skip is a special type that makes it easy to remove
+        if (validTypes.indexOf(match[2]) !== -1) {
+          return [match[1], match[2]];
+        } else {
+          throw new Error("serializeJSON ERROR: Invalid type " + match[2] + " found in input name '" + name + "', please use one of " + validTypes.join(', '));
+        }
+      } else {
+        return [name, '_']; // no defined type, then use parse options
+      }
+    },
+
+    // Set a value in an object or array, using multiple keys to set in a nested object or array:
+    //
+    // deepSet(obj, ['foo'], v)               // obj['foo'] = v
+    // deepSet(obj, ['foo', 'inn'], v)        // obj['foo']['inn'] = v // Create the inner obj['foo'] object, if needed
+    // deepSet(obj, ['foo', 'inn', '123'], v) // obj['foo']['arr']['123'] = v //
+    //
+    // deepSet(obj, ['0'], v)                                   // obj['0'] = v
+    // deepSet(arr, ['0'], v, {useIntKeysAsArrayIndex: true})   // arr[0] = v
+    // deepSet(arr, [''], v)                                    // arr.push(v)
+    // deepSet(obj, ['arr', ''], v)                             // obj['arr'].push(v)
+    //
+    // arr = [];
+    // deepSet(arr, ['', v]          // arr => [v]
+    // deepSet(arr, ['', 'foo'], v)  // arr => [v, {foo: v}]
+    // deepSet(arr, ['', 'bar'], v)  // arr => [v, {foo: v, bar: v}]
+    // deepSet(arr, ['', 'bar'], v)  // arr => [v, {foo: v, bar: v}, {bar: v}]
+    //
+    deepSet: function (o, keys, value, opts) {
+      var key, nextKey, tail, lastIdx, lastVal, f;
+      if (opts == null) { opts = {}; }
+      f = $.serializeJSON;
+      if (f.isUndefined(o)) { throw new Error("ArgumentError: param 'o' expected to be an object or array, found undefined"); }
+      if (!keys || keys.length === 0) { throw new Error("ArgumentError: param 'keys' expected to be an array with least one element"); }
+
+      key = keys[0];
+
+      // Only one key, then it's not a deepSet, just assign the value.
+      if (keys.length === 1) {
+        if (key === '') {
+          o.push(value); // '' is used to push values into the array (assume o is an array)
+        } else {
+          o[key] = value; // other keys can be used as object keys or array indexes
+        }
+
+      // With more keys is a deepSet. Apply recursively.
+      } else {
+        nextKey = keys[1];
+
+        // '' is used to push values into the array,
+        // with nextKey, set the value into the same object, in object[nextKey].
+        // Covers the case of ['', 'foo'] and ['', 'var'] to push the object {foo, var}, and the case of nested arrays.
+        if (key === '') {
+          lastIdx = o.length - 1; // asume o is array
+          lastVal = o[lastIdx];
+          if (f.isObject(lastVal) && (f.isUndefined(lastVal[nextKey]) || keys.length > 2)) { // if nextKey is not present in the last object element, or there are more keys to deep set
+            key = lastIdx; // then set the new value in the same object element
+          } else {
+            key = lastIdx + 1; // otherwise, point to set the next index in the array
+          }
+        }
+
+        // '' is used to push values into the array "array[]"
+        if (nextKey === '') {
+          if (f.isUndefined(o[key]) || !$.isArray(o[key])) {
+            o[key] = []; // define (or override) as array to push values
+          }
+        } else {
+          if (opts.useIntKeysAsArrayIndex && f.isValidArrayIndex(nextKey)) { // if 1, 2, 3 ... then use an array, where nextKey is the index
+            if (f.isUndefined(o[key]) || !$.isArray(o[key])) {
+              o[key] = []; // define (or override) as array, to insert values using int keys as array indexes
+            }
+          } else { // for anything else, use an object, where nextKey is going to be the attribute name
+            if (f.isUndefined(o[key]) || !f.isObject(o[key])) {
+              o[key] = {}; // define (or override) as object, to set nested properties
+            }
+          }
+        }
+
+        // Recursively set the inner object
+        tail = keys.slice(1);
+        f.deepSet(o[key], tail, value, opts);
+      }
+    },
+
+    // Fill the formAsArray object with values for the unchecked checkbox inputs,
+    // using the same format as the jquery.serializeArray function.
+    // The value of the unchecked values is determined from the opts.checkboxUncheckedValue
+    // and/or the data-unchecked-value attribute of the inputs.
+    readCheckboxUncheckedValues: function (formAsArray, $form, opts) {
+      var selector, $uncheckedCheckboxes, $el, dataUncheckedValue, f;
+      if (opts == null) { opts = {}; }
+      f = $.serializeJSON;
+
+      selector = 'input[type=checkbox][name]:not(:checked):not([disabled])';
+      $uncheckedCheckboxes = $form.find(selector).add($form.filter(selector));
+      $uncheckedCheckboxes.each(function (i, el) {
+        $el = $(el);
+        dataUncheckedValue = $el.attr('data-unchecked-value');
+        if(dataUncheckedValue) { // data-unchecked-value has precedence over option opts.checkboxUncheckedValue
+          formAsArray.push({name: el.name, value: dataUncheckedValue});
+        } else {
+          if (!f.isUndefined(opts.checkboxUncheckedValue)) {
+            formAsArray.push({name: el.name, value: opts.checkboxUncheckedValue});
+          }
+        }
+      });
+    }
+
+  };
+
+}));
+
+},{"jquery":10}],10:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -16352,7 +16358,7 @@ return jQuery;
   }
 }.call(this));
 
-},{}]},{},[2])
+},{}]},{},[1])
 
 
 //# sourceMappingURL=main.js.map

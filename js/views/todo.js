@@ -1,10 +1,5 @@
 import $ from 'jquery';
-
-// Using edited local copy until
-// they merge my PR that fixes their
-// dependency on globals:
-// https://github.com/marioizquierdo/jquery.serializeJSON/pull/50
-import '../../jquery-serializejson';
+import 'jquery-serializejson';
 
 function template(model) {
   let complete = !!model.get('completeAt');
