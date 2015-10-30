@@ -38,7 +38,7 @@ var todos = new _resources.TodoCollection();
 
 todos.fetch().then(function () {
 
-  (0, _jquery2['default'])('body').append(new _views.TodoView(todos).render().$el);
+  (0, _jquery2['default'])('.wrapper').html(new _views.TodoView(todos).render().$el);
 });
 
 console.log('Hello, World');
@@ -121,7 +121,10 @@ var _backbone2 = _interopRequireDefault(_backbone);
 
 var TodoModel = _backbone2['default'].Model.extend({
   urlRoot: 'https://api.parse.com/1/classes/Todo',
-  idAttribute: 'objectId'
+  idAttribute: 'objectId',
+  isComplete: function isComplete() {
+    return !!this.get('completeAt');
+  }
 });
 
 exports['default'] = TodoModel;
@@ -158,14 +161,14 @@ var _jquery2 = _interopRequireDefault(_jquery);
 require('jquery-serializejson');
 
 function template(model) {
-  var complete = !!model.get('completeAt');
+  var complete = model.isComplete();
   var fa = complete ? 'undo' : 'close';
   var action = complete ? 'undo' : 'remove';
   return '\n    <li class="todo">\n      <span class="title ' + (complete ? 'complete' : '') + '">\n        ' + model.get('title') + '\n      </span>\n      <button class="' + action + '" data-id="' + model.id + '">\n        <i class="fa fa-' + fa + '"></i>\n      </button>\n    </li>\n  ';
 }
 
 function wrapper() {
-  return '\n    <form class="todo-add">\n      <input type="text" name="title" placeholder="Add Something">\n      <button><i class="fa fa-plus"></i></button>\n    </form>\n    <ul class="todo-list"></ul>\n  ';
+  return '\n    <header>\n      <h1>Things Todo</h1>\n    </header>\n    <main>\n      <form class="todo-add">\n        <input type="text" name="title" placeholder="Add Something">\n        <button><i class="fa fa-plus"></i></button>\n      </form>\n      <ul class="todo-list"></ul>\n    </main>\n    <footer>\n      <button class="clear">Clear Complete</button>\n    </footer>\n  ';
 }
 
 function View(collection) {
@@ -203,6 +206,20 @@ function View(collection) {
       completeAt: null
     }).then(function () {
       return _this.render();
+    });
+  });
+  this.$el.on('click', '.clear', function (e) {
+    e.preventDefault();
+    _this.$el.find('main').html('\n      <div class="clearing">\n        <div class="spinner">\n          <i class="fa fa-refresh fa-spin"></i>\n        </div>\n        <h4>Deleting Complete Todos</h4>\n      </div>\n    ');
+    _this.$el.find('footer button').remove();
+    var completeModels = _this.collection.filter(function (model) {
+      return model.isComplete();
+    });
+    var deleteRequests = completeModels.map(function (m) {
+      return m.destroy();
+    });
+    Promise.all(deleteRequests).then(function () {
+      _this.render();
     });
   });
 }

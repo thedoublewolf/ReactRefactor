@@ -59,7 +59,7 @@
     left: -1.85714em; }
 
 .fa-border {
-  padding: 0.2em 0.25em 0.15em;
+  padding: .2em .25em .15em;
   border: solid 0.08em #eee;
   border-radius: .1em; }
 
@@ -2088,5 +2088,29 @@ h1 {
         background: #1eb0ff;
         color: #eaf8ff;
         box-shadow: 0 0 15px #0077b7 inset; }
+
+.clearing {
+  text-align: center;
+  color: #678; }
+  .clearing .spinner {
+    font-size: 100px; }
+  .clearing h4 {
+    font-size: 18px; }
+
+footer {
+  text-align: center;
+  padding-bottom: 100px; }
+  footer button.clear {
+    width: 200px;
+    margin: 10px;
+    padding: 10px;
+    border: 3px solid #f87979;
+    border-radius: 3px;
+    background: #f64848;
+    color: #fddada; }
+    footer button.clear:hover {
+      background: #ff2828;
+      color: #fff4f4;
+      box-shadow: 0 0 15px #990000 inset; }
 
 /*# sourceMappingURL=main.css.map */

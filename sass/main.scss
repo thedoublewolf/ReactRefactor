@@ -93,3 +93,37 @@ h1 {
     }
   }
 }
+
+.clearing {
+  text-align: center;
+  color: #678;
+
+  .spinner {
+    font-size: 100px;
+  }
+
+  h4 {
+    font-size: 18px;
+  }
+}
+
+footer {
+  text-align: center;
+  padding-bottom: 100px;
+
+  button.clear {
+    width: 200px;
+    margin: 10px;
+    padding: 10px;
+    border: 3px solid lighten(#f64848, 10%);
+    border-radius: 3px;
+    background: #f64848;
+    color: lighten(#f64848, 30%);
+
+    &:hover {
+      background: #ff2828;
+      color: lighten(#ff2828, 40%);
+      box-shadow: 0 0 15px darken(red, 20%) inset;
+    }
+  }
+}

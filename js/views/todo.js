@@ -2,7 +2,7 @@ import $ from 'jquery';
 import 'jquery-serializejson';
 
 function template(model) {
-  let complete = !!model.get('completeAt');
+  let complete = model.isComplete();
   let fa = complete ? 'undo' : 'close';
   let action = complete ? 'undo' : 'remove';
   return `
@@ -19,11 +19,19 @@ function template(model) {
 
 function wrapper() {
   return `
-    <form class="todo-add">
-      <input type="text" name="title" placeholder="Add Something">
-      <button><i class="fa fa-plus"></i></button>
-    </form>
-    <ul class="todo-list"></ul>
+    <header>
+      <h1>Things Todo</h1>
+    </header>
+    <main>
+      <form class="todo-add">
+        <input type="text" name="title" placeholder="Add Something">
+        <button><i class="fa fa-plus"></i></button>
+      </form>
+      <ul class="todo-list"></ul>
+    </main>
+    <footer>
+      <button class="clear">Clear Complete</button>
+    </footer>
   `;
 }
 
@@ -64,6 +72,25 @@ function View(collection) {
     model.save({
       completeAt: null
     }).then(() => this.render());
+  });
+  this.$el.on('click', '.clear', (e) => {
+    e.preventDefault();
+    this.$el.find('main').html(`
+      <div class="clearing">
+        <div class="spinner">
+          <i class="fa fa-refresh fa-spin"></i>
+        </div>
+        <h4>Deleting Complete Todos</h4>
+      </div>
+    `);
+    this.$el.find('footer button').remove();
+    let completeModels = this.collection.filter((model) => {
+      return model.isComplete();
+    });
+    let deleteRequests = completeModels.map(m => m.destroy());
+    Promise.all(deleteRequests).then(() => {
+      this.render();
+    });
   });
 }
 

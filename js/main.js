@@ -17,7 +17,7 @@ let todos = new TodoCollection();
 
 todos.fetch().then(function() {
   
-  $('body').append(new TodoView(todos).render().$el);
+  $('.wrapper').html(new TodoView(todos).render().$el);
 
 });
 
