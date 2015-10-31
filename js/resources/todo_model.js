@@ -1,7 +1,9 @@
 import Backbone from 'backbone';
+import {APP_URL} from '../parse_auth';
+
 
 const TodoModel = Backbone.Model.extend({
-  urlRoot: 'https://api.parse.com/1/classes/Todo',
+  urlRoot: APP_URL,
   idAttribute: 'objectId',
   isComplete() {
     return !!this.get('completeAt');

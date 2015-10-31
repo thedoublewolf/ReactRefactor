@@ -51,10 +51,12 @@ Object.defineProperty(exports, '__esModule', {
 });
 var APP_ID = 'mmoMgOQzCeRE8Ad4vmRkHMLYyTwEPPrAGXMEfDFm';
 var API_KEY = 'xvocUSdI55mrUV7m7fb0ylyXO2kQ6EML2mlBDEoY';
+var APP_URL = 'https://api.parse.com/1/classes/Todo';
 
 exports['default'] = {
   APP_ID: APP_ID,
-  API_KEY: API_KEY
+  API_KEY: API_KEY,
+  APP_URL: APP_URL
 };
 module.exports = exports['default'];
 
@@ -95,8 +97,10 @@ var _todo_model = require('./todo_model');
 
 var _todo_model2 = _interopRequireDefault(_todo_model);
 
+var _parse_auth = require('../parse_auth');
+
 var TodoCollection = _backbone2['default'].Collection.extend({
-  url: 'https://api.parse.com/1/classes/Todo',
+  url: _parse_auth.APP_URL,
   model: _todo_model2['default'],
   parse: function parse(data) {
     return data.results;
@@ -106,7 +110,7 @@ var TodoCollection = _backbone2['default'].Collection.extend({
 exports['default'] = TodoCollection;
 module.exports = exports['default'];
 
-},{"./todo_model":5,"backbone":8}],5:[function(require,module,exports){
+},{"../parse_auth":2,"./todo_model":5,"backbone":8}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -119,8 +123,10 @@ var _backbone = require('backbone');
 
 var _backbone2 = _interopRequireDefault(_backbone);
 
+var _parse_auth = require('../parse_auth');
+
 var TodoModel = _backbone2['default'].Model.extend({
-  urlRoot: 'https://api.parse.com/1/classes/Todo',
+  urlRoot: _parse_auth.APP_URL,
   idAttribute: 'objectId',
   isComplete: function isComplete() {
     return !!this.get('completeAt');
@@ -130,7 +136,7 @@ var TodoModel = _backbone2['default'].Model.extend({
 exports['default'] = TodoModel;
 module.exports = exports['default'];
 
-},{"backbone":8}],6:[function(require,module,exports){
+},{"../parse_auth":2,"backbone":8}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -146,6 +152,7 @@ var _todo2 = _interopRequireDefault(_todo);
 exports.TodoView = _todo2['default'];
 
 },{"./todo":7}],7:[function(require,module,exports){
+// Obviously we are using jquery
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -158,76 +165,166 @@ var _jquery = require('jquery');
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
+// This just allows us to call $(form).serializeJSON()
+// and get back a JSON object of the form data.
+
 require('jquery-serializejson');
 
+/*
+ *
+ * This is a template for each todo item.
+ *
+ */
+
 function template(model) {
+  // check of the model is complete
   var complete = model.isComplete();
+
+  // show a different icon based on if model is complete
   var fa = complete ? 'undo' : 'close';
+
+  // use a different action based on if model is complete
   var action = complete ? 'undo' : 'remove';
+
+  // define our template
   return '\n    <li class="todo">\n      <span class="title ' + (complete ? 'complete' : '') + '">\n        ' + model.get('title') + '\n      </span>\n      <button class="' + action + '" data-id="' + model.id + '">\n        <i class="fa fa-' + fa + '"></i>\n      </button>\n    </li>\n  ';
 }
+
+/*
+ *
+ * This is our main wrapper template.
+ *
+ */
 
 function wrapper() {
   return '\n    <header>\n      <h1>Things Todo</h1>\n    </header>\n    <main>\n      <form class="todo-add">\n        <input type="text" name="title" placeholder="Add Something">\n        <button><i class="fa fa-plus"></i></button>\n      </form>\n      <ul class="todo-list"></ul>\n    </main>\n    <footer>\n      <button class="clear">Clear Complete</button>\n    </footer>\n  ';
 }
 
+/*
+ *
+ * This is a view constructor.
+ * - the constructor function accepts a collection
+ * - creates a root element to container everything
+ * - and adds event listeners for different actions.
+ *
+ */
+
 function View(collection) {
   var _this = this;
 
+  // Grab the collection as an argument to the constructor
+  // and store a reference as `this.collection` to use later.
   this.collection = collection;
+
+  // Create the root element for the view
   this.$el = (0, _jquery2['default'])('<div/>').addClass('todo-collection');
+
+  // Add event listener for when form is submitted.
   this.$el.on('submit', 'form', function (e) {
+    // prevent form from causing page to reload
     e.preventDefault();
+    // find the element with an icon
+    // and convert it to a spinner
     _this.$el.find('.fa-plus').removeClass('fa-plus').addClass('fa-spin').addClass('fa-spinner');
+    // get the data from the form
     var data = _this.$el.find('form').serializeJSON();
+    // use data to create a new todo item
     _this.collection.add(data).save().then(function () {
       return _this.render();
     });
   });
+
+  // Add event listener for when a todo is marked complete
   this.$el.on('click', '.remove', function (e) {
     e.preventDefault();
+    // get the button from the event
     var $button = (0, _jquery2['default'])(e.currentTarget);
+    // get the todo id from the button
     var id = $button.data('id');
+    // get the model by id from the collection
     var model = _this.collection.get(id);
+    // convert button icon to a spinner
     $button.find('.fa-close').removeClass('fa-close').addClass('fa-spin').addClass('fa-spinner');
+    // Save the `completeAt` property on the todo
     model.save({
       completeAt: new Date().toString()
     }).then(function () {
       return _this.render();
     });
   });
+
+  // Add event listener for when completed todo undone
   this.$el.on('click', '.undo', function (e) {
     e.preventDefault();
+    // get the button from the event
     var $button = (0, _jquery2['default'])(e.currentTarget);
+    // get the todo id from the button
     var id = $button.data('id');
+    // get the model by id from the collection
     var model = _this.collection.get(id);
+    // convert button icon to a spinner
     $button.find('.fa-undo').removeClass('fa-undo').addClass('fa-spin').addClass('fa-spinner');
+    // Clear the `completeAt` property on the todo
     model.save({
       completeAt: null
     }).then(function () {
       return _this.render();
     });
   });
+
+  // Add event listener for when the clear all button is clicked
+  // ( This should delete all completed todo records. )
   this.$el.on('click', '.clear', function (e) {
     e.preventDefault();
+    // Replace the main section of the page with a spinner.
     _this.$el.find('main').html('\n      <div class="clearing">\n        <div class="spinner">\n          <i class="fa fa-refresh fa-spin"></i>\n        </div>\n        <h4>Deleting Complete Todos</h4>\n      </div>\n    ');
-    _this.$el.find('footer button').remove();
+    // Remove the cleat button
+    _this.$el.find('footer .clear').remove();
+    // Grab all the models marked complete
     var completeModels = _this.collection.filter(function (model) {
       return model.isComplete();
     });
+    // Map all the models to delete requests.
+    // When we call `destroy()` on a model it makes
+    // a DELETE request and returns a promise.
+    // So if map our array of complete models to
+    // `destroy()` calls we will get back an array
+    // of primises.
     var deleteRequests = completeModels.map(function (m) {
       return m.destroy();
     });
+    // Since we have an array of promises we can use
+    // `Promise.all` to be notified when all of them
+    // have succeeded.
     Promise.all(deleteRequests).then(function () {
+      // Once they have all succeeded
+      // call `this.render()` (this is the main view)
+      // to reset the view
       _this.render();
     });
   });
 }
 
+/*
+ *
+ * Set the View prototype.
+ *
+ */
+
 View.prototype = {
+
+  // Create a render function on the view.
   render: function render() {
+    // First just add our wrapper template
+    // which will create our base structure.
     this.$el.html(wrapper());
+
+    // Grab the <ul> we just created from
+    // the wrapper()
     var $ul = this.$el.find('ul');
+
+    // iterate our collection and render
+    // an <li> for each model.
     this.collection.each(function (model) {
       var $li = (0, _jquery2['default'])(template(model));
       $ul.append($li);
