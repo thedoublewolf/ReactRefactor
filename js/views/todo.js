@@ -28,7 +28,7 @@ function template(model) {
   return `
     <li class="todo">
       <span class="title ${complete ? 'complete' : ''}">
-        ${model.get('title')}
+        ${model.get('task')}
       </span>
       <button class="${action}" data-id="${model.id}">
         <i class="fa fa-${fa}"></i>
@@ -52,7 +52,7 @@ function wrapper() {
     </header>
     <main>
       <form class="todo-add">
-        <input type="text" name="title" placeholder="Add Something">
+        <input type="text" name="task" placeholder="Add Something">
         <button><i class="fa fa-plus"></i></button>
       </form>
       <ul class="todo-list"></ul>

@@ -49,9 +49,9 @@ console.log('Hello, World');
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
-var APP_ID = 'mmoMgOQzCeRE8Ad4vmRkHMLYyTwEPPrAGXMEfDFm';
-var API_KEY = 'xvocUSdI55mrUV7m7fb0ylyXO2kQ6EML2mlBDEoY';
-var APP_URL = 'https://api.parse.com/1/classes/Todo';
+var APP_ID = 'Byq4k2yo6Cxe2XzgFmFpEKSn0OQZ6966P8cw6IA2';
+var API_KEY = 'g32VhFdiy6bIqbycVb6VrEJ7KMg7V1OsQHRluhCR';
+var APP_URL = 'https://api.parse.com/1/classes/list';
 
 exports['default'] = {
   APP_ID: APP_ID,
@@ -187,7 +187,7 @@ function template(model) {
   var action = complete ? 'undo' : 'remove';
 
   // define our template
-  return '\n    <li class="todo">\n      <span class="title ' + (complete ? 'complete' : '') + '">\n        ' + model.get('title') + '\n      </span>\n      <button class="' + action + '" data-id="' + model.id + '">\n        <i class="fa fa-' + fa + '"></i>\n      </button>\n    </li>\n  ';
+  return '\n    <li class="todo">\n      <span class="title ' + (complete ? 'complete' : '') + '">\n        ' + model.get('task') + '\n      </span>\n      <button class="' + action + '" data-id="' + model.id + '">\n        <i class="fa fa-' + fa + '"></i>\n      </button>\n    </li>\n  ';
 }
 
 /*
@@ -197,7 +197,7 @@ function template(model) {
  */
 
 function wrapper() {
-  return '\n    <header>\n      <h1>Things Todo</h1>\n    </header>\n    <main>\n      <form class="todo-add">\n        <input type="text" name="title" placeholder="Add Something">\n        <button><i class="fa fa-plus"></i></button>\n      </form>\n      <ul class="todo-list"></ul>\n    </main>\n    <footer>\n      <button class="clear">Clear Complete</button>\n    </footer>\n  ';
+  return '\n    <header>\n      <h1>Things Todo</h1>\n    </header>\n    <main>\n      <form class="todo-add">\n        <input type="text" name="task" placeholder="Add Something">\n        <button><i class="fa fa-plus"></i></button>\n      </form>\n      <ul class="todo-list"></ul>\n    </main>\n    <footer>\n      <button class="clear">Clear Complete</button>\n    </footer>\n  ';
 }
 
 /*
