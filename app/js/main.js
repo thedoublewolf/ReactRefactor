@@ -23,8 +23,7 @@ var _parse_auth = require('./parse_auth');
 
 var _parse_auth2 = _interopRequireDefault(_parse_auth);
 
-var _resources = require('./resources');
-
+// import {TodoCollection} from './resources';
 // import {TodoView} from './views';
 
 var _react = require('react');
@@ -35,9 +34,9 @@ var _reactDom = require('react-dom');
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
-var _react_viewsTodo_list = require('./react_views/todo_list');
+var _react_viewsWrapper = require('./react_views/wrapper');
 
-var _react_viewsTodo_list2 = _interopRequireDefault(_react_viewsTodo_list);
+var _react_viewsWrapper2 = _interopRequireDefault(_react_viewsWrapper);
 
 _jquery2['default'].ajaxSetup({
   headers: {
@@ -46,16 +45,20 @@ _jquery2['default'].ajaxSetup({
   }
 });
 
-var todos = new _resources.TodoCollection();
+// let todos = new TodoCollection();
 
-todos.fetch().then(function () {
+// todos.fetch().then(function() {
 
-  (0, _jquery2['default'])('.wrapper').html(new _react_viewsTodo_list2['default'](todos).render().$el);
-});
+//   $('.wrapper').html(new TodoView(todos).render().$el);
+
+// });
+var wrapper = document.querySelector('.wrapper');
+
+_reactDom2['default'].render(_react2['default'].createElement(_react_viewsWrapper2['default'], null), wrapper);
 
 console.log('Hello, World');
 
-},{"./parse_auth":2,"./react_views/todo_list":4,"./resources":5,"backbone":8,"jquery":36,"moment":37,"react":168,"react-dom":39,"underscore":169}],2:[function(require,module,exports){
+},{"./parse_auth":2,"./react_views/wrapper":7,"backbone":8,"jquery":36,"moment":37,"react":168,"react-dom":39,"underscore":169}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -73,6 +76,72 @@ exports['default'] = {
 module.exports = exports['default'];
 
 },{}],3:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
+var Footer = _react2['default'].createClass({
+  displayName: 'Footer',
+
+  render: function render() {
+    return _react2['default'].createElement(
+      'footer',
+      null,
+      _react2['default'].createElement(
+        'button',
+        { className: 'clear' },
+        'Clear Complete'
+      )
+    );
+  }
+
+});
+
+exports['default'] = Footer;
+module.exports = exports['default'];
+
+},{"react":168}],4:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
+var Header = _react2['default'].createClass({
+  displayName: 'Header',
+
+  render: function render() {
+    return _react2['default'].createElement(
+      'header',
+      null,
+      _react2['default'].createElement(
+        'h1',
+        null,
+        'Things Todo'
+      )
+    );
+  }
+
+});
+
+exports['default'] = Header;
+module.exports = exports['default'];
+
+},{"react":168}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -110,7 +179,7 @@ var ListItem = _react2['default'].createClass({
 exports['default'] = ListItem;
 module.exports = exports['default'];
 
-},{"react":168}],4:[function(require,module,exports){
+},{"react":168}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -136,11 +205,12 @@ var TodoList = _react2['default'].createClass({
 
   getListItem: function getListItem(task) {
     var items = [];
-    _underscore2['default'].each(task, function (value) {
-      if (value) {
-        items.push(_react2['default'].createElement(_list_item2['default'], { field: value }));
+    _underscore2['default'].each(task, function (value, key) {
+      if (key === 'task') {
+        items.push(_react2['default'].createElement(_list_item2['default'], { key: key, field: value }));
       }
     });
+    console.log(items);
     return items;
   },
 
@@ -157,7 +227,7 @@ var TodoList = _react2['default'].createClass({
 exports['default'] = TodoList;
 module.exports = exports['default'];
 
-},{"./list_item":3,"react":168,"underscore":169}],5:[function(require,module,exports){
+},{"./list_item":5,"react":168,"underscore":169}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -166,74 +236,41 @@ Object.defineProperty(exports, '__esModule', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _todo_model = require('./todo_model');
+var _react = require('react');
 
-var _todo_model2 = _interopRequireDefault(_todo_model);
+var _react2 = _interopRequireDefault(_react);
 
-var _todo_collection = require('./todo_collection');
+var _todo_list = require('./todo_list');
 
-var _todo_collection2 = _interopRequireDefault(_todo_collection);
+var _todo_list2 = _interopRequireDefault(_todo_list);
 
-exports.TodoModel = _todo_model2['default'];
-exports.TodoCollection = _todo_collection2['default'];
+var _header = require('./header');
 
-},{"./todo_collection":6,"./todo_model":7}],6:[function(require,module,exports){
-'use strict';
+var _header2 = _interopRequireDefault(_header);
 
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
+var _footer = require('./footer');
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _footer2 = _interopRequireDefault(_footer);
 
-var _backbone = require('backbone');
+var Wrapper = _react2['default'].createClass({
+  displayName: 'Wrapper',
 
-var _backbone2 = _interopRequireDefault(_backbone);
-
-var _todo_model = require('./todo_model');
-
-var _todo_model2 = _interopRequireDefault(_todo_model);
-
-var _parse_auth = require('../parse_auth');
-
-var TodoCollection = _backbone2['default'].Collection.extend({
-  url: _parse_auth.APP_URL,
-  model: _todo_model2['default'],
-  parse: function parse(data) {
-    return data.results;
+  render: function render() {
+    return _react2['default'].createElement(
+      'div',
+      { className: 'todo-collection' },
+      _react2['default'].createElement(_header2['default'], null),
+      _react2['default'].createElement(_todo_list2['default'], null),
+      _react2['default'].createElement(_footer2['default'], null)
+    );
   }
+
 });
 
-exports['default'] = TodoCollection;
+exports['default'] = Wrapper;
 module.exports = exports['default'];
 
-},{"../parse_auth":2,"./todo_model":7,"backbone":8}],7:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var _backbone = require('backbone');
-
-var _backbone2 = _interopRequireDefault(_backbone);
-
-var _parse_auth = require('../parse_auth');
-
-var TodoModel = _backbone2['default'].Model.extend({
-  urlRoot: _parse_auth.APP_URL,
-  idAttribute: 'objectId',
-  isComplete: function isComplete() {
-    return !!this.get('completeAt');
-  }
-});
-
-exports['default'] = TodoModel;
-module.exports = exports['default'];
-
-},{"../parse_auth":2,"backbone":8}],8:[function(require,module,exports){
+},{"./footer":3,"./header":4,"./todo_list":6,"react":168}],8:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.2.3
 

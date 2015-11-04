@@ -6,11 +6,12 @@ let TodoList = React.createClass({
 
   getListItem(task) {
     let items = [];
-    _.each(task, (value) => {
-      if (value) {
-        items.push(<ListItem field={value}/>);
+    _.each(task, (value, key) => {
+      if (key === 'task') {
+        items.push(<ListItem key={key} field={value}/>);
       }
     });
+    console.log(items);
     return items;
   },
 

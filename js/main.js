@@ -3,13 +3,13 @@ import _ from 'underscore';
 import moment from 'moment';
 import Backbone from 'backbone';
 import parse from './parse_auth';
-import {TodoCollection} from './resources';
+// import {TodoCollection} from './resources';
 // import {TodoView} from './views';
 
 import React from 'react';
 import ReactDom from 'react-dom';
 
-import TodoList from './react_views/todo_list';
+import Wrapper from './react_views/wrapper';
 
 $.ajaxSetup({
   headers: {
@@ -18,13 +18,18 @@ $.ajaxSetup({
   }
 });
 
-let todos = new TodoCollection();
+// let todos = new TodoCollection();
 
-todos.fetch().then(function() {
+// todos.fetch().then(function() {
   
-  $('.wrapper').html(new TodoList(todos).render().$el);
+//   $('.wrapper').html(new TodoView(todos).render().$el);
 
-});
+// });
+let wrapper = document.querySelector('.wrapper');
 
+ReactDom.render(
+  <Wrapper/>,
+  wrapper
+);
 
 console.log('Hello, World');
