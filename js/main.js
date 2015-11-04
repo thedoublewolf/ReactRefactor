@@ -3,8 +3,8 @@ import _ from 'underscore';
 import moment from 'moment';
 import Backbone from 'backbone';
 import parse from './parse_auth';
-// import {TodoCollection} from './resources';
-// import {TodoView} from './views';
+import {TodoCollection} from './resources';
+import {TodoView} from './views';
 
 import React from 'react';
 import ReactDom from 'react-dom';
