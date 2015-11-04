@@ -22,7 +22,7 @@ $.ajaxSetup({
 
 // todos.fetch().then(function() {
   
-//   $('.wrapper').html(new TodoView(todos).render().$el);
+//   $('.todo-collection').html(new TodoView(todos).render().$el);
 
 // });
 let wrapper = document.querySelector('.wrapper');
