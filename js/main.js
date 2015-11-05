@@ -18,18 +18,19 @@ $.ajaxSetup({
   }
 });
 
-// let todos = new TodoCollection();
+let todos = new TodoCollection();
 
-// todos.fetch().then(function() {
+todos.fetch().then(function() {
   
-//   $('.todo-collection').html(new TodoView(todos).render().$el);
+  // $('.todo-collection').html(new TodoView(todos).render().$el);
 
-// });
-let wrapper = document.querySelector('.wrapper');
+  let wrapper = document.querySelector('.wrapper');
 
-ReactDom.render(
-  <Wrapper/>,
-  wrapper
-);
+  ReactDom.render(
+    <Wrapper/>,
+    wrapper
+  );
+
+});
 
 console.log('Hello, World');

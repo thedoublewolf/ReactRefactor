@@ -46,16 +46,16 @@ _jquery2['default'].ajaxSetup({
   }
 });
 
-// let todos = new TodoCollection();
+var todos = new _resources.TodoCollection();
 
-// todos.fetch().then(function() {
+todos.fetch().then(function () {
 
-//   $('.todo-collection').html(new TodoView(todos).render().$el);
+  // $('.todo-collection').html(new TodoView(todos).render().$el);
 
-// });
-var wrapper = document.querySelector('.wrapper');
+  var wrapper = document.querySelector('.wrapper');
 
-_reactDom2['default'].render(_react2['default'].createElement(_react_viewsWrapper2['default'], null), wrapper);
+  _reactDom2['default'].render(_react2['default'].createElement(_react_viewsWrapper2['default'], null), wrapper);
+});
 
 console.log('Hello, World');
 
@@ -432,28 +432,19 @@ require('jquery-serializejson');
  *
  */
 
-// function template(model) {
-//   // check of the model is complete
-//   let complete = model.isComplete();
+function template(model) {
+  // check of the model is complete
+  var complete = model.isComplete();
 
-//   // show a different icon based on if model is complete
-//   let fa = complete ? 'undo' : 'close';
+  // show a different icon based on if model is complete
+  var fa = complete ? 'undo' : 'close';
 
-//   // use a different action based on if model is complete
-//   let action = complete ? 'undo' : 'remove';
+  // use a different action based on if model is complete
+  var action = complete ? 'undo' : 'remove';
 
-//   // define our template
-//   return `
-//     <li class="todo">
-//       <span class="title ${complete ? 'complete' : ''}">
-//         ${model.get('task')}
-//       </span>
-//       <button class="${action}" data-id="${model.id}">
-//         <i class="fa fa-${fa}"></i>
-//       </button>
-//     </li>
-//   `;
-// }
+  // define our template
+  return '\n    <li class="todo">\n      <span class="title ' + (complete ? 'complete' : '') + '">\n        ' + model.get('task') + '\n      </span>\n      <button class="' + action + '" data-id="' + model.id + '">\n        <i class="fa fa-' + fa + '"></i>\n      </button>\n    </li>\n  ';
+}
 
 /*
  *
